@@ -1,5 +1,4 @@
 import requests
-import json
 from src.api.utils import headers
 
 
@@ -26,7 +25,7 @@ def get_by_id(zabbix_url: str, api_token: str, map_id: str) -> dict:
         json_response = response.json()
         if 'error' in json_response:
             print("Aucune carte ne semble posséder l'id : {}. Raison : {}".format(map_id, json_response['error']))
-            exit
+            exit()
 
         return json_response['result'][0]
 
@@ -51,7 +50,7 @@ def get_by_name(zabbix_url: str, api_token: str, name: str) -> dict:
     try:
         response = requests.post(zabbix_url, headers=headers, json=data, verify=False)
         json_response = response.json()
-        print(json_response)
+
         if 'error' in json_response['result']:
             print("Erreur lors de la récupération de la carte : {}. Raison : {}".format(name, json_response['error']))
             exit()
@@ -107,7 +106,8 @@ def update(zabbix_url: str, api_token: str, zabbix_map: dict) -> str:
         json_response = response.json()
 
         if "error" in json_response:
-            print("Erreur lors de la mise à jour de la carte : {}. Raison : {}".format(zabbix_map['sysmapid'], json_response['error']))
+            print("Erreur lors de la mise à jour de la carte : {}. Raison : {}".format(zabbix_map['sysmapid'],
+                                                                                       json_response['error']))
             exit()
 
         map_id = json_response["result"]["sysmapids"][0]
