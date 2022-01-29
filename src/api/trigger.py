@@ -1,5 +1,4 @@
 import requests
-import json
 from src.api.utils import headers
 
 
