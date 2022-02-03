@@ -1,4 +1,5 @@
-easysnmp==0.2.5
+# easysnmp==0.2.5
+pysnmp==4.4.12
 requests==2.26.0
 python-dotenv==0.19.2
-coverage==5.5
+# coverage==5.5
