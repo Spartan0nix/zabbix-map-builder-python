@@ -1,27 +1,23 @@
-from pysnmp.hlapi import *
+import re
+import pysnmp
 
 
-def snmp_walk(community: str, ip: str, oid: str) -> list:
-    result = []
-    operation = nextCmd(SnmpEngine(),
-                        CommunityData(community, mpModel=1),
-                        UdpTransportTarget((ip, 161)),
-                        ContextData(),
-                        ObjectType(ObjectIdentity(oid)),
-                        lexicographicMode=False)
+def extract_indexes_and_ip(interfaces: list) -> list:
+    indexes = []
+    for interface in interfaces:
+        router_interface = {}
+        oid: pysnmp.smi.rfc1902.ObjectType
+        for oid in interface:
+            regex = re.search(
+                r"[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]{2}\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.([0-9]+)\.[0-9]",
+                str(oid[0]))
+            index = regex.group(1)
 
-    for (errorIndication, errorStatus, errorIndex, varBinds) in operation:
-        if errorIndication:
-            print("errorIndication : {}".format(errorIndication))
-            return
-        if errorStatus:
-            print("errorStatus : {}".format(errorStatus))
-            return
-        if errorIndication:
-            print("errorIndex : {}".format(errorIndex))
-            return
+            remote_ip_tuple = oid[1].asNumbers()
+            remote_ip = '.'.join(str(x) for x in remote_ip_tuple)
 
-        if not errorIndication and not errorStatus:
-            result.append(varBinds)
+            router_interface['index'] = index
+            router_interface['remote_ip'] = remote_ip
+            indexes.append(router_interface)
 
-    return result
+    return indexes
