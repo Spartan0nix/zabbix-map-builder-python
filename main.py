@@ -10,6 +10,8 @@ import src.api.link as api_link
 
 import re
 import pysnmp
+from pysnmp.hlapi import *
+import src.snmp.operator as snmp_operator
 import src.snmp.utils as snmp_utils
 
 FIXTURES = [
@@ -107,26 +109,29 @@ if __name__ == '__main__':
     R1 = os.getenv("R1")
     R2 = os.getenv("R2")
     snmp_community = os.getenv("SNMP_COMMUNITY")
-    routers_info = []
+    remote_routers_info = []
 
-    interfaces = snmp_utils.snmp_walk(snmp_community, R1, '1.3.6.1.4.1.9.9.23.1.2.1.1.4')
-    for interface in interfaces:
-        router_interface = {}
-        oid: pysnmp.smi.rfc1902.ObjectType
-        for oid in interface:
-            regex = re.search(
-                r"[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]{2}\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.([0-9]+)\.[0-9]",
-                str(oid[0]))
-            index = regex.group(1)
+    # Get remotes routers mib indexes and IP
+    raw_remote_indexes = snmp_operator.snmp_walk(snmp_community, R2, '1.3.6.1.4.1.9.9.23.1.2.1.1.4')
+    remote_indexes = snmp_utils.extract_indexes_and_ip(raw_remote_indexes)
+    [remote_routers_info.append(index) for index in remote_indexes]
 
-            remote_ip_tuple = oid[1].asNumbers()
-            remote_ip = '.'.join(str(x) for x in remote_ip_tuple)
+    # Foreach remotes routers, get the associate hostname
+    for remote_router_info in remote_routers_info:
+        remote_hostname_oid = '1.3.6.1.4.1.9.9.23.1.2.1.1.6.{}'.format(remote_router_info['index'])
+        remote_interface_oid = '1.3.6.1.4.1.9.9.23.1.2.1.1.7.{}'.format(remote_router_info['index'])
 
-            router_interface['index'] = index
-            router_interface['remote_ip'] = remote_ip
-            routers_info.append(router_interface)
+        hostname_request = snmp_operator.snmp_walk(snmp_community, R2, remote_hostname_oid)
+        for response in hostname_request:
+            for oid in response:
+                remote_router_info['hostname'] = str(oid[1])
 
-    print(routers_info)
+        interface_request = snmp_operator.snmp_walk(snmp_community, R2, remote_interface_oid)
+        for response in interface_request:
+            for oid in response:
+                remote_router_info['interface'] = str(oid[1])
+
+    print(remote_routers_info)
 
     # indexes = nextCmd(SnmpEngine(),
     #                   CommunityData(snmp_community, mpModel=1),
