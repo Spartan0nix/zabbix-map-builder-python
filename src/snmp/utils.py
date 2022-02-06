@@ -6,10 +6,10 @@ def extract_indexes_and_ip(interfaces: list) -> list:
     indexes = []
     for interface in interfaces:
         router_interface = {}
-        oid: pysnmp.smi.rfc1902.ObjectType
         for oid in interface:
             regex = re.search(
-                r"[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]{2}\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.([0-9]+)\.[0-9]",
+                r"[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]{2}\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.(["
+                r"0-9]+)\.[0-9]",
                 str(oid[0]))
             index = regex.group(1)
 
@@ -21,3 +21,10 @@ def extract_indexes_and_ip(interfaces: list) -> list:
             indexes.append(router_interface)
 
     return indexes
+
+
+def extract_indexes(oid: str) -> str:
+    regex = re.search(r"[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.[0-9]{2}\.[0-9]\.[0-9]\.[0-9]\.[0-9]\.["
+                      r"0-9]\.([0-9]+)\.[0-9]", str(oid[0]))
+    index = regex.group(1)
+    return index
