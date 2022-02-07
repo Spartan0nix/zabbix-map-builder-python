@@ -1,0 +1,37 @@
+# ---------------------------------------------------------------------------------------------------------------------
+# - ** Old code **                                                                                                    -
+# - Can be used to retrieve the value of the local_interface by querying the remote router of the current link        -
+# - Can be tedious when dealing with redundant links                                                                  -
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Get remote router mib indexes for each remote hostname entry
+# Ensure that only the entry pointing to the current router are used
+remote_router_indexes = []
+if router_info['remote_hostname'] not in routers_indexes_list:
+    routers_indexes_list[router_info['remote_hostname']] = []
+
+remote_router_indexes_request = snmp_operator.snmp_walk(snmp_community, router_info['remote_ip'],
+                                                        '1.3.6.1.4.1.9.9.23.1.2.1.1.6')
+# Add the remote router mib index used for this entry
+for response in remote_router_indexes_request:
+    for oid in response:
+        index = snmp_utils.extract_indexes(oid)
+        remote_router_indexes.append(index)
+
+for remote_router_index in remote_router_indexes:
+    if remote_router_index not in routers_indexes_list[router_info['remote_hostname']]:
+        local_interface_oid = '1.3.6.1.4.1.9.9.23.1.2.1.1.7.{}'.format(remote_router_index)
+        local_interface_request = snmp_operator.snmp_walk(snmp_community, router_info['remote_ip'],
+                                                          local_interface_oid)
+
+        for response in local_interface_request:
+            for oid in response:
+                router_info['local_interface'] = str(oid[1])
+
+        routers_indexes_list[router_info['remote_hostname']].append(remote_router_index)
+        # Do not continue to loop as an entry as been find suitable
+        break
+
+router_info['local_hostname'] = routers_info['local_hostname']
+router_info.pop('index')
+router_info.pop('remote_ip')
