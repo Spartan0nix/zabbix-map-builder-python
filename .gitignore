@@ -1,2 +1,3 @@
-/src/api/exemple_update_map.json
 /.env
+/src/api/exemple_update_map.json
+/src/*/__pycache__
