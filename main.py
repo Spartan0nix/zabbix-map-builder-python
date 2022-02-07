@@ -1,16 +1,11 @@
 import os
 
-import requests
 from dotenv import load_dotenv
 import src.api.auth as api_auth
 import src.api.host as api_host
 import src.api.map as api_map
 import src.api.trigger as api_trigger
 import src.api.link as api_link
-
-import re
-import pysnmp
-from pysnmp.hlapi import *
 import src.snmp.operator as snmp_operator
 import src.snmp.utils as snmp_utils
 
@@ -42,27 +37,27 @@ import src.snmp.utils as snmp_utils
 #     }
 # ]
 
-def build_router_connection(router_ip: str) -> list[dict[str, str, str, str]]:
-    routers_info = {'routers': []}
+def build_router_connections(router_ip: str) -> list[dict[str, str, str, str]]:
+    connections = {'routers': []}
 
     # Get local_hostname
     local_hostname_oid = '1.3.6.1.4.1.9.9.23.1.3.4.0'
     local_hostname_request = snmp_operator.snmp_get(snmp_community, router_ip, local_hostname_oid)
     local_hostname = [str(oid[1]) for oid in local_hostname_request]
-    routers_info['local_hostname'] = str(local_hostname[0])
+    connections['local_hostname'] = str(local_hostname[0])
 
     # Get local router mib indexes and remote routers IPs
     raw_local_indexes = snmp_operator.snmp_walk(snmp_community, router_ip, '1.3.6.1.4.1.9.9.23.1.2.1.1.4')
     local_indexes = snmp_utils.extract_indexes_and_ip(raw_local_indexes)
-    [routers_info['routers'].append(index) for index in local_indexes]
+    [connections['routers'].append(index) for index in local_indexes]
 
     # Foreach remotes routers, get the associate info
-    for router_info in routers_info['routers']:
+    for router_info in connections['routers']:
         index = router_info['index']
         remote_hostname_oid = '1.3.6.1.4.1.9.9.23.1.2.1.1.6.{}'.format(index)
         local_interface_oid = '1.3.6.1.4.1.9.9.23.1.1.1.1.6.{}'.format(index)
         remote_interface_oid = '1.3.6.1.4.1.9.9.23.1.2.1.1.7.{}'.format(index)
-        router_info['local_hostname'] = routers_info['local_hostname']
+        router_info['local_hostname'] = connections['local_hostname']
 
         remote_hostname_request = snmp_operator.snmp_walk(snmp_community, router_ip, remote_hostname_oid)
         for response in remote_hostname_request:
@@ -81,7 +76,7 @@ def build_router_connection(router_ip: str) -> list[dict[str, str, str, str]]:
         router_info.pop('index')
         router_info.pop('remote_ip')
 
-    return routers_info["routers"]
+    return connections["routers"]
 
 
 def build_map(connections: list):
@@ -154,7 +149,7 @@ if __name__ == '__main__':
     R3 = os.getenv("R3")
     snmp_community = os.getenv("SNMP_COMMUNITY")
 
-    routers_info = build_router_connection(R3)
+    routers_info = build_router_connections(R3)
 
     print("------------------------------------------------------------")
     print("-    The following entries will be use to build the map   -")
