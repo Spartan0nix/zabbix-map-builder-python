@@ -117,3 +117,28 @@ def update(zabbix_url: str, api_token: str, zabbix_map: dict) -> str:
     except Exception as e:
         print("Erreur lors de la mise à jour de la carte : {}. Raison : {}".format(zabbix_map['sysmapid'], e))
         exit()
+
+
+def host_exist(zabbix_map: dict, host_id: str) -> str:
+    for host in zabbix_map['selements']:
+        if host['elements'][0]['hostid'] == host_id:
+            return host['selementid']
+    return ''
+
+
+def link_exist(zabbix_map: dict,
+               local_host_id: str,
+               remote_host_id: str,
+               local_trigger_id: str,
+               remote_trigger_id: str
+               ) -> bool:
+    for link in zabbix_map['links']:
+        if link['selementid1'] == local_host_id and link['selementid2'] == remote_host_id:
+            if link['linktriggers'][0]['triggerid'] == local_trigger_id \
+                    and link['linktriggers'][1]['triggerid'] == remote_trigger_id:
+                return True
+        if link['selementid1'] == remote_host_id and link['selementid2'] == local_host_id:
+            if link['linktriggers'][0]['triggerid'] == remote_trigger_id \
+                    and link['linktriggers'][1]['triggerid'] == local_trigger_id:
+                return True
+    return False
