@@ -1,16 +1,19 @@
 import os
 from dotenv import load_dotenv
+from src.check.api import zabbix_server_reachable
 import src.api.auth as api_auth
 import src.api.map as api_map
-from function import main
-
+from function import exec_iteration
 
 if __name__ == '__main__':
     load_dotenv()
-    R3 = os.getenv("R3")
-
+    ROUTER_IP = os.getenv("ROUTER_IP")
     ZABBIX_URL = os.getenv("ZABBIX_URL")
     MAP_NAME = os.getenv("ZABBIX_MAP_NAME")
+
+    if not zabbix_server_reachable(ZABBIX_URL):
+        exit(1)
+
     ZABBIX_TOKEN = api_auth.auth(ZABBIX_URL, os.getenv("ZABBIX_USER"), os.getenv("ZABBIX_USER_PASSWORD"))
 
     # Get the map by name
@@ -30,4 +33,4 @@ if __name__ == '__main__':
     current_map['links'].clear()
     api_map.update(ZABBIX_URL, ZABBIX_TOKEN, current_map)
 
-    main(ZABBIX_URL, ZABBIX_TOKEN, current_map, [R3])
+    exec_iteration(ZABBIX_URL, ZABBIX_TOKEN, current_map, [ROUTER_IP])

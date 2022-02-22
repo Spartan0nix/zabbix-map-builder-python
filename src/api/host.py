@@ -1,5 +1,6 @@
 import requests
 from src.api.utils import headers
+from src.log.logger import logger
 
 
 def get_host_id(zabbix_url: str, hostname: str, api_token: str) -> str:
@@ -21,14 +22,12 @@ def get_host_id(zabbix_url: str, hostname: str, api_token: str) -> str:
         response = requests.post(zabbix_url, headers=headers, json=data, verify=False)
         json_response = response.json()
         if 'error' in json_response:
-            print("Erreur lors de l'authentification au server Zabbix. Raison : {}".format(json_response['error']))
-            exit()
-
+            logger.error("Error while retrieving host_id for host '{}'. Reason : {}".format(hostname, json_response['error']))
+            exit(1)
         return json_response['result'][0]['hostid']
-
     except Exception as e:
-        print("Erreur lors de la récupération de l'hôte : {}. Raison : {}".format(hostname, e))
-        exit()
+        logger.error("Error while retrieving host_id for host '{}'.Reason : {}".format(hostname, e))
+        exit(1)
 
 
 def create(name: str, host_id: str) -> dict:
