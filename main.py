@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from src.check.api import zabbix_server_reachable
 import src.api.auth as api_auth
 import src.api.map as api_map
-from function import exec
+from function import exec_iteration
 
 if __name__ == '__main__':
     load_dotenv()
@@ -33,4 +33,4 @@ if __name__ == '__main__':
     current_map['links'].clear()
     api_map.update(ZABBIX_URL, ZABBIX_TOKEN, current_map)
 
-    exec(ZABBIX_URL, ZABBIX_TOKEN, current_map, [ROUTER_IP])
+    exec_iteration(ZABBIX_URL, ZABBIX_TOKEN, current_map, [ROUTER_IP])
