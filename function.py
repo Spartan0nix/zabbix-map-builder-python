@@ -125,7 +125,7 @@ def build_map(url: str, token: str, zabbix_map: dict, connections: list):
         api_map.update(url, token,  zabbix_map)
 
 
-def main(url: str, token: str, zabbix_map: dict, routers_ip: list):
+def exec(url: str, token: str, zabbix_map: dict, routers_ip: list):
     remote_routers_ip = []
     print("remote_routers_ip : {}".format(remote_routers_ip))
 
@@ -152,7 +152,7 @@ def main(url: str, token: str, zabbix_map: dict, routers_ip: list):
     if continue_building == 'Y' or continue_building == 'Yes':
         print("Map building in progress ...")
         updated_map = api_map.get_by_id(url, token, zabbix_map['sysmapid'])
-        main(url, token, updated_map, remote_routers_ip)
+        exec(url, token, updated_map, remote_routers_ip)
     else:
         print("Program ending ...")
         exit()
