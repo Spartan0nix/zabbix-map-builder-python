@@ -12,18 +12,13 @@ def snmp_walk(community: str, ip: str, oid: str) -> list:
 
     for (errorIndication, errorStatus, errorIndex, varBinds) in operation:
         if errorIndication:
-            print("errorIndication : {}".format(errorIndication))
-            return
+            raise Exception(errorIndication)
         if errorStatus:
-            print("errorStatus : {}".format(errorStatus))
-            return
+            raise Exception(errorStatus)
         if errorIndication:
-            print("errorIndex : {}".format(errorIndex))
-            return
-
+            raise Exception(errorIndication)
         if not errorIndication and not errorStatus:
             result.append(varBinds)
-
     return result
 
 
@@ -37,16 +32,11 @@ def snmp_get(community: str, ip: str, oid: str) -> list:
 
     for (errorIndication, errorStatus, errorIndex, varBinds) in operation:
         if errorIndication:
-            print("errorIndication : {}".format(errorIndication))
-            return
+            raise Exception(errorIndication)
         if errorStatus:
-            print("errorStatus : {}".format(errorStatus))
-            return
+            raise Exception(errorStatus)
         if errorIndication:
-            print("errorIndex : {}".format(errorIndex))
-            return
-
+            raise Exception(errorIndication)
         if not errorIndication and not errorStatus:
             result.append(varBinds[0])
-
     return result

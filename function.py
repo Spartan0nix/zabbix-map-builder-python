@@ -1,5 +1,10 @@
+import logging
 import os
+import time
+
 from dotenv import load_dotenv
+from src.check.snmp import router_reachable
+from src.log.logger import logger
 import src.api.host as api_host
 import src.api.map as api_map
 import src.api.trigger as api_trigger
@@ -88,23 +93,23 @@ def get_router_connections(router_ip: str) -> dict[list, list]:
 def build_map(url: str, token: str, zabbix_map: dict, connections: list):
     for connection in connections:
         # Get host's id
-        local_host_id = api_host.get_host_id(url, connection["local_hostname"], token)
-        remote_host_id = api_host.get_host_id(url, connection["remote_hostname"], token)
+        local_host_id = api_host.get_host_id(url, connection['local_hostname'], token)
+        remote_host_id = api_host.get_host_id(url, connection['remote_hostname'], token)
         # Get trigger's id
-        local_trigger_id = api_trigger.get_id(url, token, local_host_id, connection["local_interface"])
-        remote_trigger_id = api_trigger.get_id(url, token, remote_host_id, connection["remote_interface"])
+        local_trigger_id = api_trigger.get_id(url, token, local_host_id, connection['local_interface'])
+        remote_trigger_id = api_trigger.get_id(url, token, remote_host_id, connection['remote_interface'])
 
         # Build and add the hosts to the current map if they are not present
         local_host_exist = api_map.host_exist(zabbix_map, local_host_id)
         if local_host_exist == '':
-            local_host = api_host.create(connection["local_hostname"], local_host_id)
+            local_host = api_host.create(connection['local_hostname'], local_host_id)
             zabbix_map['selements'].append(local_host)
         else:
             local_host_id = local_host_exist
 
         remote_host_exist = api_map.host_exist(zabbix_map, remote_host_id)
         if remote_host_exist == '':
-            remote_host = api_host.create(connection["remote_hostname"], remote_host_id)
+            remote_host = api_host.create(connection['remote_hostname'], remote_host_id)
             zabbix_map['selements'].append(remote_host)
         else:
             remote_host_id = remote_host_exist
@@ -114,8 +119,8 @@ def build_map(url: str, token: str, zabbix_map: dict, connections: list):
         if not link_exist:
             link = api_link.create(local_host_id,
                                    remote_host_id,
-                                   connection["local_interface"],
-                                   connection["remote_interface"],
+                                   connection['local_interface'],
+                                   connection['remote_interface'],
                                    local_trigger_id,
                                    remote_trigger_id)
 
@@ -127,34 +132,45 @@ def build_map(url: str, token: str, zabbix_map: dict, connections: list):
 
 def exec_iteration(url: str, token: str, zabbix_map: dict, routers_ip: list):
     remote_routers_ip = []
-    print("remote_routers_ip : {}".format(remote_routers_ip))
-
     for router_ip in routers_ip:
-        routers_info = get_router_connections(router_ip)
+        if router_reachable(router_ip):
+            routers_info = get_router_connections(router_ip)
 
-        print("------------------------------------------------------------")
-        print("-    The following entries will be use to build the map   -")
-        print("------------------------------------------------------------")
-        [print(x) for x in routers_info['routers']]
+            if len(routers_info) == 0:
+                logger.info('No more connection were found.')
+                logger.info('Ending program...')
 
-        # Populate the zabbix map
-        build_map(url, token, zabbix_map, routers_info['routers'])
+            logger.info('------------------------------------------------------------')
+            logger.info('-    The following entries will be use to build the map   -')
+            logger.info('------------------------------------------------------------')
+            [logger.info(x) for x in routers_info['routers']]
 
-        # Add remote routers
-        for router in routers_info['remote_hosts_ip']:
-            if router not in remote_routers_ip:
-                remote_routers_ip.append(router)
+            # Populate the zabbix map
+            # build_map(url, token, zabbix_map, routers_info['routers'])
 
-    print('\nIf you with, the following remote host(s) can be used to continue building the map.')
-    print(remote_routers_ip)
-    continue_building = input("\nDo you want to continue ? (Yes/No) Default (No) :")
+            # Add remote routers
+            for router in routers_info['remote_hosts_ip']:
+                if router not in remote_routers_ip:
+                    remote_routers_ip.append(router)
+        else:
+            logger.info('Skipping to next router...')
+            continue
+
+    if len(remote_routers_ip) == 0:
+        logger.info('No more router to add.')
+        logger.info('Program ending...')
+        exit(1)
+
+    logger.info('If you wish, the following remote host(s) can be used to continue building the map.')
+    logger.info(remote_routers_ip)
+    # Prevent input prompt from showing before the different logger info
+    time.sleep(1)
+    continue_building = input('\nDo you want to continue ? (Yes/No) Default (No) :')
 
     if continue_building == 'Y' or continue_building == 'Yes':
-        print("Map building in progress ...")
+        logger.info('Map building in progress ...')
         updated_map = api_map.get_by_id(url, token, zabbix_map['sysmapid'])
         exec_iteration(url, token, updated_map, remote_routers_ip)
     else:
-        print("Program ending ...")
-        exit()
-
-
+        logger.info('Program ending ...')
+        exit(1)

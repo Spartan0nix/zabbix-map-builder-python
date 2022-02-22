@@ -1,5 +1,4 @@
 import re
-import pysnmp
 
 
 def extract_indexes_and_ip(interfaces: list) -> list[dict[str, str]]:
@@ -12,14 +11,11 @@ def extract_indexes_and_ip(interfaces: list) -> list[dict[str, str]]:
                 r"0-9]+)\.[0-9]",
                 str(oid[0]))
             index = regex.group(1)
-
             remote_ip_tuple = oid[1].asNumbers()
             remote_ip = '.'.join(str(x) for x in remote_ip_tuple)
-
             router_interface['index'] = str(index)
             router_interface['remote_ip'] = str(remote_ip)
             indexes.append(router_interface)
-
     return indexes
 
 
