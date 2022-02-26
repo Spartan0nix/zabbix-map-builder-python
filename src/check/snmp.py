@@ -13,6 +13,6 @@ def router_reachable(ip: str) -> bool:
         snmp_get(snmp_community, ip, check_oid)
         return True
     except Exception as e:
-        logger.critical("Host '{}' is unreachable through SNMP.".format(ip))
-        logger.critical('Exception details : {}'.format(e))
+        logger.warning("Host '{}' is unreachable through SNMP.".format(ip))
+        logger.warning('Exception details : {}'.format(e))
         return False

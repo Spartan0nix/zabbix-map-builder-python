@@ -109,7 +109,6 @@ def update(zabbix_url: str, api_token: str, zabbix_map: dict) -> str:
                                                                                             json_response["error"]))
             exit(1)
         map_id = json_response['result']['sysmapids'][0]
-        logger.info("Map with id '{}' updated.".format(map_id))
         return map_id
     except Exception as e:
         logger.error("Error while updating map with id '{}' found. Reason : {}.".format(zabbix_map['sysmapid'], e))
