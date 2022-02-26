@@ -141,12 +141,15 @@ def exec_iteration(url: str, token: str, zabbix_map: dict, routers_ip: list):
                 logger.info('Ending program...')
 
             logger.info('------------------------------------------------------------')
-            logger.info('-    The following entries will be use to build the map   -')
+            logger.info('-    The following entries were used to populate the map   -')
             logger.info('------------------------------------------------------------')
-            [logger.info(x) for x in routers_info['routers']]
+            entry = 1
+            for x in routers_info['routers']:
+                logger.info("Entry ({}) : {}".format(entry, x))
+                entry += 1
 
             # Populate the zabbix map
-            # build_map(url, token, zabbix_map, routers_info['routers'])
+            build_map(url, token, zabbix_map, routers_info['routers'])
 
             # Add remote routers
             for router in routers_info['remote_hosts_ip']:
@@ -163,6 +166,7 @@ def exec_iteration(url: str, token: str, zabbix_map: dict, routers_ip: list):
 
     logger.info('If you wish, the following remote host(s) can be used to continue building the map.')
     logger.info(remote_routers_ip)
+
     # Prevent input prompt from showing before the different logger info
     time.sleep(1)
     continue_building = input('\nDo you want to continue ? (Yes/No) Default (No) :')
